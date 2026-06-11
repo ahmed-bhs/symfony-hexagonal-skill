@@ -89,7 +89,7 @@ When starting a Symfony project from scratch, the plugin will set up the full he
 > Create a new Symfony project with hexagonal architecture for an e-commerce platform
 ```
 
-The plugin will generate the base directory structure across all four layers (Domain, Application, Infrastructure, Presentation) and configure `services.yaml` with proper port-to-adapter bindings.
+The plugin will generate the base directory structure across the three layers (Domain, Application, Infrastructure — with entry points as driving adapters under `Infrastructure/Adapter/In/`, there is no separate Presentation layer) and configure `services.yaml` with proper port-to-adapter bindings.
 
 ### 2. Add your first module
 
@@ -102,7 +102,7 @@ This generates:
 - Port interfaces (repository, external services)
 - Command/Query classes with handlers
 - Doctrine mapping in Infrastructure
-- REST controller in Presentation
+- REST controller as a driving adapter in `Infrastructure/Adapter/In/`
 - Service bindings in `services.yaml`
 
 ### 3. Keep building
@@ -185,7 +185,7 @@ Step 3: Infrastructure Layer
   └─ Create repository adapters (implement port interfaces)
   └─ Bind ports to adapters in services.yaml
 
-Step 4: Presentation Layer
+Step 4: Driving Adapters (Infrastructure/Adapter/In)
   └─ Thin out controllers (dispatch commands/queries only)
   └─ Apply standard JSON response format
   └─ Add #[IsGranted] to every endpoint
@@ -219,7 +219,7 @@ The plugin enforces 4 non-negotiable rules for all hexagonal code:
 The Domain layer has **zero framework logic** — no Symfony/Doctrine services, no third-party behaviour. Business code is plain PHP. Inert mapping/validation attributes (`#[ORM\...]`, format `#[Assert\...]`) are allowed: they keep the entity testable as plain PHP while avoiding external XML mapping. DB-access constraints (`UniqueEntity`, `Callback`, `Expression`) stay out — they belong in `Adapter/In/Validation/`.
 
 ```
-Allowed direction: Presentation → Application → Domain ← Infrastructure
+Allowed direction: Adapter/In → Application → Domain ← Adapter/Out
 ```
 
 ### 2. Port/Adapter Enforcement
