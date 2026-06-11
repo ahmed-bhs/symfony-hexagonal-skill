@@ -2,7 +2,7 @@
 
 A Claude Code plugin that enforces hexagonal architecture (ports & adapters) in Symfony projects. Works with both **new projects** (full scaffolding) and **existing projects** (progressive, module-by-module refactoring).
 
-No slash commands needed — skills and agents activate automatically based on conversation context.
+Skills and agents activate automatically based on conversation context; audit commands are available as explicit slash commands (`/audit-branch`, `/audit-tests`).
 
 ---
 
@@ -30,7 +30,7 @@ Copy the skills, agents, and architecture rules into your Symfony project's `.cl
 
 ```bash
 # Clone the repository
-git clone https://github.com/aligundogdu/symfony-hexagonal-skill.git /tmp/hex-skill
+git clone https://github.com/ahmed-bhs/symfony-hexagonal-skill.git /tmp/hex-skill
 
 # Create the required directories in your project
 mkdir -p your-project/.claude/skills your-project/.claude/agents your-project/.claude/commands
@@ -55,7 +55,7 @@ If you want to use the plugin across multiple projects without copying:
 
 ```bash
 # Clone once
-git clone https://github.com/aligundogdu/symfony-hexagonal-skill.git ~/symfony-hexagonal-skill
+git clone https://github.com/ahmed-bhs/symfony-hexagonal-skill.git ~/symfony-hexagonal-skill
 
 # In each Symfony project, symlink the skills, agents, and commands
 mkdir -p .claude
@@ -75,7 +75,7 @@ After installation, start Claude Code in your project directory and ask:
 > Analyze the project structure for hexagonal architecture compliance
 ```
 
-If installed correctly, the **hexagonal-architect** agent will scan your project and return a compliance report. Skills activate automatically based on conversation context - no slash commands needed.
+If installed correctly, the **hexagonal-architect** agent will scan your project and return a compliance report. Skills activate automatically based on conversation context; the `/audit-branch` and `/audit-tests` slash commands are available for explicit audits.
 
 ---
 
