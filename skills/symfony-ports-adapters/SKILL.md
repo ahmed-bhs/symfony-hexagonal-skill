@@ -70,6 +70,40 @@ final readonly class Doctrine{Entity}Repository implements {Repository}Interface
 }
 ```
 
+## Port Placement: Domain vs Application
+
+The location of a port Out depends on **who expresses the need**, not on the types in its signature. Typing is a hint but not proof — a signature can manipulate domain types while the need is actually an application concern.
+
+| The need originates in... | Port goes in |
+|---------------------------|--------------|
+| the domain (a domain concept requires it) | `Domain/Port/Out/` |
+| a use case (orchestration/technical need) | `Application/Port/Out/` |
+
+## Driving vs Driven Adapters and Ports
+
+A canonical asymmetry of Ports & Adapters — get this right:
+
+- **Adapter Out (driven)** — **implements** a port Out. The application needs an external service (DB, storage, computation); the contract is pulled by the application through a Domain interface, and the adapter provides the technical implementation. The dependency arrow points from the application to the port, never to the technology.
+  - Example: `DoctrineOrderRepository implements OrderRepositoryInterface`.
+
+- **Adapter In (driving)** — does **NOT** implement a port; it **consumes** a port In by calling it. It drives the application, so it cannot implement what it drives. The port In is the bus (`QueryBusInterface` / `CommandBusInterface`); the In adapter depends on it and pushes a typed message. The bus is implemented in Infrastructure (`MessengerQueryBus`), which routes to the handler chosen by the message type.
+  - Example: a controller/live component depends on `QueryBusInterface` and sends `ListOrdersQuery` — it implements no business port.
+
+Consequence: the link `Adapter In → use case` is carried by the **message type**, not by a dedicated interface. Layer traceability is carried by the structure itself — enforce it with deptrac when configured (forbid `Domain → Application`); the bundled `symfony-leaky-abstractions` skill and reviewer catch the common cases via static scan.
+
+## Naming: Repository vs Search/Finder, and Suffixes
+
+`Repository` and `Search`/`Finder` are both port Out (`Port/Out/`). The name conveys the role, not the port status.
+
+- Name **`Repository`** when the returned object is a rich aggregate (loaded by identity to be mutated).
+- Name **`Search`/`Finder`** when the returned object is a read projection/DTO.
+
+Suffix convention:
+- Ports carry the `Interface` suffix (not `Port`) — port status is already conveyed by the `Port/Out/` location.
+- A read-only port (projection/DTO, no mutation) uses `QueryInterface` to signal the read role at the call site.
+
+Examples: `OrderRepositoryInterface` (mutated aggregate), `OrderSearchQueryInterface` and `OrderTimelineQueryInterface` (read).
+
 ## DI Configuration
 
 ```yaml

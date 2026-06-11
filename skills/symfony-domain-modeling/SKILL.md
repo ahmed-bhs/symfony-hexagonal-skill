@@ -141,6 +141,32 @@ final class {DomainException} extends \DomainException
 }
 ```
 
+## Single Home for an Invariant
+
+A business invariant (e.g. `page >= 1`) lives in exactly one place: the Domain, inside a Value Object. A driving adapter must NOT re-implement the rule (e.g. `max(1, ...)`): every caller would duplicate it and could forget it. The VO is the sole guardian — Infrastructure sends raw values, the Domain decides.
+
+```php
+// Good: the rule lives once, in the VO
+final readonly class PageNumber
+{
+    private function __construct(public int $value)
+    {
+    }
+
+    public static function fromInt(int $value): self
+    {
+        if ($value < 1) {
+            throw InvalidPageNumber::becauseItMustBeAtLeastOne($value);
+        }
+
+        return new self($value);
+    }
+}
+
+// Bad: the adapter In recopies the rule
+$page = max(1, (int) $request->query->get('page')); // rule duplicated, can drift
+```
+
 ## References
 
 See `references/` for detailed patterns:

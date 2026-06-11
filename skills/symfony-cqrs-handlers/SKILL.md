@@ -128,6 +128,24 @@ final readonly class {UseCaseName}Handler implements QueryHandlerInterface
 }
 ```
 
+## Passing Query parameters to a port Out
+
+Never pass the whole Application Query object to a port. That would force the port (Domain) to `use App\...\Application\...Query`, making the Domain import the Application — a forbidden arrow (the `symfony-leaky-abstractions` skill flags it; enforce permanently with deptrac when configured).
+
+Rule: the **handler always unwraps the Query** before calling the port. How it unwraps — bare props or a Domain VO — depends on whether the parameters carry a business rule or a derived calculation.
+
+Decision (one "yes" forces a VO):
+- The parameters carry a **business rule** (`page >= 1`, a range like `amount > 0`, a format such as IBAN/reference, a cross-field consistency `startDate <= endDate`) → build a **Domain VO** that hosts that rule and pass the VO to the port.
+- The parameters need a **derived calculation** (`offset = (page - 1) * limit`, normalization like `trim`/lowercase, a derived total) → build a Domain VO that hosts it.
+- Otherwise (raw primitives, no rule, no calculation) → pass the primitives directly to the port.
+
+Examples:
+- `GetOrderByNumber` — `orderNumber` + `tenantId`, no rule/calc → bare props.
+- `ListOrders` — `page`/`limit` (`page >= 1`) + `offset()` → VO `OrderSearchCriteria` passed to the port Out.
+- `CreateUser` — `lastName` + `firstName` grouped into VO `PersonName` (a nameable "name" concept). Variant: here the VO is assigned to the `User` aggregate rather than passed to a port Out — same principle (application data → Domain type), different destination.
+
+Write side (Command): always go through the aggregate. The Command handler builds the aggregate from the Command, applies invariants, then passes it to the repository (`save(Aggregate)`). Never pass the Command or raw primitives to the repository — its signature requires the aggregate (otherwise invariants are bypassed, and typing the repository with the Command would make the Domain depend on the Application). The bare-props/VO flexibility therefore applies **only to reads** (parameters toward a read port).
+
 ## DTO Pattern
 
 ```php

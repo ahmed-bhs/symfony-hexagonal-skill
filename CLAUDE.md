@@ -43,6 +43,10 @@ This plugin enforces hexagonal architecture in Symfony projects. These rules app
 - Queries: `final readonly class` in `Application/UseCase/Query/{Name}/`, return DTO
 - Handlers: one `__invoke` method, colocated with their message. Bind via marker interface (`CommandHandlerInterface`/`QueryHandlerInterface`) + bus port; `#[AsMessageHandler]` is an accepted alternative
 - Two buses: `command.bus` and `query.bus` in messenger config; bus interfaces are driving ports in `Shared/Application/Port/In/`
+- Port Out placement depends on who expresses the need: a domain need → `Domain/Port/Out/`; a use-case need → `Application/Port/Out/`. Read-only ports use the `QueryInterface` suffix; mutating aggregate ports use `RepositoryInterface`
+- A handler NEVER passes the whole Query/Command to a port. It unwraps it: pass a Domain VO when the params carry a business rule or derived calculation (`page >= 1`, `offset`), otherwise pass primitives. Passing an Application Query/Command object to a port Out makes the Domain import the Application — a forbidden arrow (the `symfony-leaky-abstractions` skill flags it; enforce with deptrac when configured)
+- Write side always goes through the aggregate: the Command handler builds the aggregate, applies invariants, then `save(Aggregate)`. The bare-props/VO choice applies only to reads
+- A business invariant lives in exactly one place — the Domain VO. Driving adapters send raw values and must not recopy the rule (no `max(1, ...)` in a controller)
 
 ### 4. Event-Driven Side-Effects
 - Domain events: past-tense named, immutable, created within entities
@@ -76,6 +80,12 @@ Every endpoint MUST have a ROLE via `#[IsGranted]` or Voter. Use role hierarchy 
 - PHPStan level 8+ mandatory
 - DTOs at every boundary (controller input, handler output, API response)
 - Validation at 3 layers: driving adapter (input), Application (DTO), Domain (invariants)
+- Quality gates are blocking before integration: coding style, static analysis, migrations, and tests must all pass (enforced locally via GrumPHP or similar and in CI). Layer dependencies should be enforced by deptrac when configured (forbid `Domain → Application` and `Application → Infrastructure`)
+- Business rules live in the Domain or Application — never in technical validators or the UI
+
+### UI / Admin Adapters
+- API Platform writes keep the HTTP contract separate from the application use case (the resource/input DTO is not the Command)
+- EasyAdmin is an accepted pragmatic compromise, but CRUD controllers hold NO business logic — they dispatch commands/queries like any other driving adapter
 
 ### Async Resilience
 - Messages must be idempotent (use idempotency keys)

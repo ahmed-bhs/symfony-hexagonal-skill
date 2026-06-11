@@ -27,6 +27,11 @@ Ports live in `Domain/{Module}/Port/`. They must expose domain types only.
 # Doctrine collection / query types in ports
 grep -rn "Collection\|ArrayCollection\|QueryBuilder\|EntityManager\|Connection\|PDO" --include="*Interface.php" src/*/Domain/
 grep -rn "Doctrine\\\\\|Symfony\\\\\|Redis\|Guzzle\|Http" --include="*Interface.php" src/*/Domain/
+
+# Domain importing the Application layer — a forbidden arrow.
+# Most common cause: a port Out typed with an Application Query/Command instead of
+# unwrapped primitives or a Domain VO (see symfony-cqrs-handlers "Passing Query parameters").
+grep -rn "use App\\\\.*\\\\Application\\\\" --include="*.php" src/*/Domain/
 ```
 
 ### HTTP in Application (CRITICAL)
