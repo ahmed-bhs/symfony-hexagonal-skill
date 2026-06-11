@@ -108,9 +108,18 @@ src/{Module}/
 ├── Domain/Entity/, ValueObject/, Event/, Exception/, Port/Out/
 ├── Application/UseCase/Command/{Name}/, UseCase/Query/{Name}/, Port/Out/, DTO/, EventHandler/
 └── Infrastructure/Adapter/
-    ├── In/ApiPlatform/, CLI/, Admin/, Security/, Validation/   # driving
+    ├── In/                                                     # driving — channels + shared driving concerns
+    │   ├── ApiPlatform/ (+ Validation/), CLI/, Admin/ (+ Validation/)   # channels; channel-specific validation nested
+    │   ├── Validation/                                         # validation SHARED across channels
+    │   └── Security/                                           # voters/user checkers — shared driving concern
     └── Out/Doctrine/, Storage/, Bus/                           # driven
 ```
+
+`Adapter/In/` holds inbound channels (ApiPlatform, CLI, Admin) plus shared driving
+concerns. Place Validation by reuse scope: **shared** across channels → top-level
+`In/Validation/`; **channel-specific** → nested in the channel (`ApiPlatform/Validation/`,
+`Admin/Validation/`). Security (voters) is usually shared → `In/Security/`. Hoist what is
+shared, localise what is specific — never duplicate a shared rule per channel.
 
 Module-first namespace: `App\{Module}\{Layer}\...`. The command/query/event buses
 are driving ports in `Shared/Application/Port/In/`.

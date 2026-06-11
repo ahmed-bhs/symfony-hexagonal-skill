@@ -49,12 +49,14 @@ Module-first: every bounded context owns its three layers under `src/{Module}/`.
 └── EventHandler/    # Domain event handlers
 
 {Module}/Infrastructure/Adapter/
-├── In/              # Driving adapters
-│   ├── ApiPlatform/ # REST resources, processors, providers
-│   ├── CLI/         # Console commands
-│   ├── Admin/       # EasyAdmin CRUD, LiveComponents
-│   ├── Security/    # Voters, user checkers, auth handlers
-│   └── Validation/  # Constraints + validators (input validation)
+├── In/              # Driving adapters — channels + shared driving concerns
+│   ├── ApiPlatform/ # REST channel: resources, processors, providers
+│   │   └── Validation/  # constraints SPECIFIC to the API channel
+│   ├── CLI/         # Console channel
+│   ├── Admin/       # EasyAdmin channel: CRUD, LiveComponents
+│   │   └── Validation/  # constraints SPECIFIC to the Admin channel
+│   ├── Validation/  # constraints SHARED across channels (API + Admin)
+│   └── Security/    # Voters, user checkers, auth handlers (shared driving concern)
 └── Out/             # Driven adapters
     ├── Doctrine/    # Repositories + Mapping/ (XML/PHP, never in Domain)
     ├── Storage/     # Filesystem, S3, mailer
@@ -64,6 +66,20 @@ Module-first: every bounded context owns its three layers under `src/{Module}/`.
 The command/query/event **buses are the driving ports** of the system. They
 live in a shared module at `Shared/Application/Port/In/`; their Messenger
 adapters live at `Shared/Infrastructure/Adapter/Out/Bus/`.
+
+**`Adapter/In/` holds inbound channels plus shared driving concerns — never duplicate.**
+The channel subfolders are the ways the world drives the app: `ApiPlatform/` (HTTP),
+`CLI/`, `Admin/`. Validation and Security are driving concerns, not channels; place
+each one by its **scope of reuse**:
+- **Shared across channels** (same voter, or the same constraint used by both the API
+  and the Admin) → hoist to a cross-channel folder: `In/Security/`, `In/Validation/`.
+  Don't duplicate a shared rule into each channel.
+- **Channel-specific** (an API-only payload constraint, an Admin-only form constraint)
+  → nest inside the channel that triggers it: `ApiPlatform/Validation/`, `Admin/Validation/`.
+
+The decision is the same one as for shared kernels: hoist what is shared, localise what
+is specific. Either way these stay under `Adapter/In/` (they are driving concerns) —
+not in a `Framework/` or `Out/` folder.
 
 ## Progressive Refactoring (Existing Projects)
 
